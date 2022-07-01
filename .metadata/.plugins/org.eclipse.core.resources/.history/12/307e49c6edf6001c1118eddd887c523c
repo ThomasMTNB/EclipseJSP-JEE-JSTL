@@ -1,0 +1,24 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Frutz</title>
+</head>
+<body>
+	<h1>Les fruits</h1>
+
+	<ul>
+		<li>pomme</li>
+		<li>fraise</li>
+		<li>tomate</li>
+		<li>orange</li>
+		<li>poire</li>
+		<li>peche</li>
+
+
+	</ul>
+
+</body>
+</html>

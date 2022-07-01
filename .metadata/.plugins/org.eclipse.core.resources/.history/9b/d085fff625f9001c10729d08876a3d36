@@ -1,0 +1,115 @@
+package servlet;
+
+import java.io.IOException;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import dao.AuteurDao;
+import dao.DaoException;
+import dao.DaoFactory;
+import dao.LivreDao;
+import model.Auteur;
+import model.Livre;
+
+/**
+ * Servlet implementation class ModifierAuteur
+ */
+@WebServlet("/ModifierLivre")
+public class ModifierLivre extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+  
+	LivreDao modif = DaoFactory.getInstance().getLivreDao();
+	AuteurDao trouver = DaoFactory.getInstance().getAuteurDao();
+	
+	
+	
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		
+		List<Auteur> ListAuteur;
+		
+		try {
+			ListAuteur = trouver.lister();							// -------
+			request.setAttribute( "trouverAuteur", ListAuteur); // ("listeAuteur" , bob.lister()) 
+			
+		} catch (DaoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+		
+		
+		
+		Livre trouver;
+		
+		long id = Long.parseLong(request.getParameter("id"));
+		
+		
+		try {
+			trouver = modif.trouver(id);							
+			request.setAttribute( "livre", trouver); 
+			
+		} catch (DaoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		this.getServletContext().getRequestDispatcher("/WEB-INF/ModifL.jsp").forward(request, response);
+		
+	}
+
+
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+		
+		
+		
+		
+		Long idAuteur = Long.parseLong(request.getParameter("AuteurLivre"));
+		
+		
+		String titre = request.getParameter("newTitreLivre");
+		String categorie = request.getParameter("newCategorieLivre");
+		int nbpage = Integer.valueOf(request.getParameter("newnbpageLivre"));
+		
+		Long id = Long.parseLong(request.getParameter("id"));
+		
+		Auteur auteur;
+		
+		
+		
+		try {
+			
+			Livre modifier = modif.trouver(id);
+			
+			auteur = trouver.trouver(idAuteur);
+			
+			modifier.setAuteur(auteur);
+			
+			modifier.setTitre(titre);
+			modifier.setCategorie(categorie);
+			modifier.setNbPages(nbpage);
+			
+			
+			
+			modif.update(modifier);
+		} catch (DaoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	
+		
+		response.sendRedirect( request.getContextPath() + "/ListeLivre" );
+	}	
+
+}

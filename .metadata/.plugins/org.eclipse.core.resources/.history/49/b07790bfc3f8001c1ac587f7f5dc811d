@@ -1,0 +1,76 @@
+package servlet;
+
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import dao.AuteurDao;
+import dao.DaoException;
+import dao.DaoFactory;
+import dao.LivreDao;
+import model.Auteur;
+import model.Livre;
+
+/**
+ * Servlet implementation class AjouterAuteur
+ */
+@WebServlet("/AjouterLivre")
+public class AjouterLivre extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+	
+	
+	LivreDao ajout = DaoFactory.getInstance().getLivreDao();
+		
+
+		
+	
+	
+protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	this.getServletContext().getRequestDispatcher("/WEB-INF/AjoutA.jsp").forward(request, response);	
+	
+	
+	
+	
+	
+	
+		
+	
+	}
+
+
+protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	
+	String titre = request.getParameter("titreLivre");
+	String categorie = request.getParameter("categorieLivre");
+	int nbpage = request.getParameter("nbpageLivre");
+	
+	String email = request.getParameter("mailAuteur");
+	
+	Livre newL = new Livre();
+	
+	newL.setTitre(titre);
+	newL.setCategorie(categorie);
+	newL.setNbPages(nbpage);
+	
+	
+	
+	
+	
+	try {
+		ajout.creer(newL);
+	} catch (DaoException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	
+	response.sendRedirect( request.getContextPath() + "/ListeAuteur" );
+	
+	
+}
+
+
+}

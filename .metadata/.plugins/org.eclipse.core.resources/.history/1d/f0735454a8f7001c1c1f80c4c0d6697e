@@ -1,0 +1,227 @@
+package fr.cleverdev.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import fr.cleverdev.model.Auteur;
+
+public class AuteurDaoImpl implements AuteurDao {
+	
+	/* Ecriture des méthodes permettant d'effectuer les requêtes SQL (reprend les méthodes
+	 * présentes dans l'interface AuteurDao 
+	 * Faire le lien entre les objets Java et les tables SQL */
+	
+	private static final String SQL_INSERT       = "INSERT INTO auteur(nom,prenom,telephone,email) VALUES(?,?,?,?)";
+	private static final String SQL_SELECT       = "SELECT id,nom,prenom,telephone,email FROM auteur";
+    private static final String SQL_SELECT_BY_ID = "SELECT id,nom,prenom,telephone,email FROM auteur WHERE id= ?";
+	private static final String SQL_DELETE_BY_ID = "DELETE FROM auteur WHERE id= ? ";
+	private static final String SQL_UPDATE_BY_ID = "UPDATE auteur SET nom= ?, prenom= ?, telephone= ?, email= ? WHERE id= ?";
+	
+	private DaoFactory factory;
+	
+	/* Constructeur de la classe */
+	
+	public AuteurDaoImpl(DaoFactory factory) {
+		this.factory = factory;
+	}
+
+	/* Méthode créée :
+	 * 1. Se connecter à la base de données par la méthode getConnexion du factory
+	 * 2. Effectuer la requête SQL avec le preparedStatement (préparation puis exécution)
+	 * 3. Chaque donnée prend la place du ? en position renseignée
+	 * 4. On retourne en même temps la clef primaire de l'objet auteur en base de donnée
+	 * 	  dans le ResultSet
+	 * 5. C'est le seul moyen de différencier un auteur dans la base de donnée et
+	 *    un objet auteur dans Java qui n'a pas d'id
+	 * 6. Vérification de la création de l'auteur (dans Java)
+	 * 7. Vérification du retour de la clef primaire (ajout dans la base de données)
+	 * 8. Ajout de l'id à l'auteur en tant qu'objet java
+	 * 8. Fermeture du ResultSet, du PreparedStatement et de la connexion par la méthode releaseConnexion du factory */
+	
+	@Override
+	public void creer(Auteur auteur) throws DaoException {
+		Connection con=null;
+		try {
+			con = factory.getConnection();
+			
+			PreparedStatement pst = con.prepareStatement( SQL_INSERT, Statement.RETURN_GENERATED_KEYS );
+			pst.setString( 1, auteur.getNom() );
+			pst.setString( 2, auteur.getPrenom() );
+			pst.setString( 3, auteur.getTelephone() );
+			pst.setString( 4, auteur.getEmail() );
+			
+			int statut = pst.executeUpdate();
+
+            if ( statut == 0 ) {
+                throw new DaoException( "Echec création Auteur (aucun ajout)" );
+            }
+            ResultSet rsKeys = pst.getGeneratedKeys();
+            if ( rsKeys.next() ) {
+                auteur.setId( rsKeys.getLong( 1 ) );
+            } else {
+                throw new DaoException( "Echec création Auteur (ID non retourné)" );
+            }
+            rsKeys.close();
+			pst.close();
+			
+	    } catch(SQLException ex) {
+	    	throw new DaoException("Echec création Auteur",ex);
+	    } finally {
+	    	factory.releaseConnection(con);
+		}
+	}
+
+	/* Méthode créée :
+	 * 1. Se connecter à la base de données par la méthode getConnexion du factory
+	 * 2. Effectuer la requête SQL avec le preparedStatement
+	 * 3. On a besoin de l'id de l'auteur pour savoir lequel afficher  
+	 * 4. La donnée id prend la place du seul ? en position 1
+	 * 5. Récupération dans la base de données, des données de l'auteur recherché
+	 * 6. Fermeture du ResultSet et du PreparedStatement
+	 * 7. Fermeture de la connexion
+	 * 8. Afficher les données de la base de données SQL sous la forme d'un nouvel objet
+	 *    Auteur (java) créé par l'intermédiaire de la méthode "map" */
+	
+	@Override
+	public Auteur trouver(long id) throws DaoException {
+		Auteur            auteur=null;
+		Connection        con=null;
+		PreparedStatement pst=null;
+		ResultSet         rs=null;
+		try {
+			  con = factory.getConnection();
+			  pst = con.prepareStatement( SQL_SELECT_BY_ID );
+			  pst.setLong(1, id);
+		      rs  = pst.executeQuery();
+		      if ( rs.next() ) {
+		    	  auteur = map(rs);
+		      }
+		      rs.close();
+		      pst.close();
+	    } catch(SQLException ex) {
+	    	throw new DaoException("Erreur de recherche BDD Auteur", ex);
+	    } finally {
+	    	factory.releaseConnection(con);
+		}
+		return auteur;
+	}
+
+	 /* Méthode créée :
+	 * 1. Créer une nouvelle liste d'auteurs (vide)
+	 * 2. Se connecter à la base de données par la méthode getConnexion du factory
+	 * 3. Effectuer la requête SQL avec le preparedStatement
+	 * 4. Récupérer le résultat de la requête dans le ResultSet et création d'objets Auteur
+	 * 	  via la méthode "map" que l'on ajoute dans la liste d'auteur
+	 * 5. Fermeture du RésultSet et du PreparedStatement
+	 * 6. Fermeture de la connexion 
+	 * 7. Afficher la liste d'auteurs (remplis par les objets Auteur) */
+	
+	@Override
+	public List<Auteur> lister() throws DaoException {
+		List<Auteur> listeAuteurs = new ArrayList<Auteur>();
+		Connection   con=null;
+		try {
+			  con = factory.getConnection();
+			  PreparedStatement pst = con.prepareStatement( SQL_SELECT );
+		      ResultSet         rs  = pst.executeQuery();
+		      while ( rs.next() ) {
+		    	  listeAuteurs.add( map(rs) );
+		      }
+		      rs.close();
+		      pst.close();
+	    } catch(SQLException ex) {
+	    	throw new DaoException("Erreur de lecture BDD Auteur", ex);
+	    } finally {
+	    	factory.releaseConnection(con);
+		}
+		return listeAuteurs;
+	}
+
+	  /* Méthode créée :
+		 * 1. Se connecter à la base de données par la méthode getConnexion du factory
+		 * 2. Effectuer la requête SQL avec le preparedStatement
+		 * 3. On a besoin de l'id de l'auteur pour savoir lequel afficher  
+		 * 4. La donnée id prend la place du seul ? en position 1 
+		 * 5. Vérification de la surppression de l'auteur
+		 * 6. Fermeture du PreparedStatement
+		 * 7. Fermeture de la connexion */
+	
+	@Override
+	public void supprimer(long id) throws DaoException {
+		Connection   con=null;
+		try {
+			  con = factory.getConnection();
+			  PreparedStatement pst = con.prepareStatement( SQL_DELETE_BY_ID );
+			  pst.setLong(1, id);
+			  int statut = pst.executeUpdate();
+			  if ( statut == 0 ) {
+				  throw new DaoException("Erreur de suppression Auteur("+id+")");
+			  }
+		      pst.close();
+	    } catch(SQLException ex) {
+	    	throw new DaoException("Erreur de suppression BDD Auteur", ex);
+	    } finally {
+	    	factory.releaseConnection(con);
+		}
+	}
+	
+    /* Mapping (correspondance) entre un ResultSet (obtenu après conversion avec la base de
+     * données et la création d'un nouvel objet auteur ayant les mêmes données (JavaBean)
+  	   Methode utilitaire (interne) */
+	
+    private static Auteur map( ResultSet resultSet ) throws SQLException {
+        Auteur a = new Auteur();
+        a.setId( resultSet.getLong( "id" ) );
+        a.setNom( resultSet.getString( "nom" ) );
+        a.setPrenom( resultSet.getString( "prenom" ) );
+        a.setTelephone( resultSet.getString( "telephone" ) );
+        a.setEmail( resultSet.getString( "email" ) );
+        return a;
+    }
+
+    /* Méthode créée :
+	 * 1. Se connecter à la base de données par la méthode getConnexion du factory
+	 * 2. Effectuer la requête SQL avec le preparedStatement
+	 * 3. Chaque donnée prend la place du ? en position renseignée (on modifie tous
+	 *    les attribus d'un objet auteur (même si la modification ne change rien)
+	 * 4. On a besoin de l'id de l'auteur pour savoir lequel modifier  
+	 * 5. On ne retourne pas la clef primaire de l'objet car on le sait déjà en base de données
+	 * 	  l'objet auteur dans java a aussi déjà son id retourné à la création
+	 * 6. Vérification de la modification de l'auteur
+	 * 7. Fermeture du PreparedStatement
+	 * 8. Fermeture de la connexion */
+    
+	@Override
+	public void update(Auteur auteur) throws DaoException {
+		Connection con=null;
+		try {
+			con = factory.getConnection();
+			
+			PreparedStatement pst = con.prepareStatement( SQL_UPDATE_BY_ID );
+			pst.setString( 1, auteur.getNom() );
+			pst.setString( 2, auteur.getPrenom() );
+			pst.setString( 3, auteur.getTelephone() );
+			pst.setString( 4, auteur.getEmail() );
+			pst.setLong(5, auteur.getId());
+			
+			int statut = pst.executeUpdate();
+
+            if ( statut == 0 ) {
+                throw new DaoException("Echec modification Auteur (aucun ajout)");
+            }
+			pst.close();
+			
+	    } catch(SQLException ex) {
+	    	throw new DaoException("Echec modification Auteur",ex);
+	    } finally {
+	    	factory.releaseConnection(con);
+		}
+	}
+
+
+}

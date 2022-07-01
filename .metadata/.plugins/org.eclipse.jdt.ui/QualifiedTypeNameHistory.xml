@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+    <fullyQualifiedTypeName name="java.lang.reflect.Array"/>
+    <fullyQualifiedTypeName name="java.util.ArrayList"/>
+    <fullyQualifiedTypeName name="dao.AuteurDao"/>
+    <fullyQualifiedTypeName name="dao.DaoFactory"/>
+    <fullyQualifiedTypeName name="model.Auteur"/>
+    <fullyQualifiedTypeName name="model.Livre"/>
+    <fullyQualifiedTypeName name="dao.LivreDao"/>
+</qualifiedTypeNameHistroy>
